@@ -17,7 +17,7 @@ pipeline {
         stage('Git Clone') {
             steps {
                 dir ("${PROJECT}"){
-                    git branch: 'main', credentialsId: 'Github', url: "git@github.com:lucasvscosta96/${PROJECT}.git"
+                    git branch: 'qa', credentialsId: 'Github', url: "git@github.com:lucasvscosta96/${PROJECT}.git"
                 }
                 dir ("${PROJECT_TEST}"){
                     git branch: 'main', credentialsId: 'Github', url: "git@github.com:lucasvscosta96/${PROJECT_TEST}.git"
@@ -50,15 +50,8 @@ pipeline {
         stage('Docker Push') {
             steps {
                 sh 'cd $PROJECT && \
-                    docker build -t lucasvscosta/dev-projeto-final -f Dockerfile .'
-                sh 'docker push lucasvscosta/dev-projeto-final'
-            }
-        }
-        stage('Deploy to Dev'){
-            steps {
-                sh 'cd $REPO_K8S && \
-                    cd dev-$PROJECT && \
-                    kubectl apply -f .'
+                    docker build -t lucasvscosta/qa-projeto-final -f Dockerfile .'
+                sh 'docker push lucasvscosta/qa-projeto-final'
             }
         }
         stage('Deploy to QA') {
@@ -68,19 +61,6 @@ pipeline {
                     kubectl apply -f .'
             }
         }
-        stage('Deploy approval'){
-            steps {
-                input "Deploy to Prod?"
-            }
-        }
-        stage('Deploy to Prod') {
-            steps {
-                sh 'cd $REPO_K8S && \
-                    cd prod-$PROJECT && \
-                    kubectl apply -f .'
-            }
-        }
-    
     }
     post {
         always {

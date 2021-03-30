@@ -17,7 +17,7 @@ pipeline {
         stage('Git Clone') {
             steps {
                 dir ("${PROJECT}"){
-                    git branch: 'main', credentialsId: 'Github', url: "git@github.com:lucasvscosta96/${PROJECT}.git"
+                    git branch: 'dev', credentialsId: 'Github', url: "git@github.com:lucasvscosta96/${PROJECT}.git"
                 }
                 dir ("${PROJECT_TEST}"){
                     git branch: 'main', credentialsId: 'Github', url: "git@github.com:lucasvscosta96/${PROJECT_TEST}.git"
@@ -61,26 +61,6 @@ pipeline {
                     kubectl apply -f .'
             }
         }
-        stage('Deploy to QA') {
-            steps {
-                sh 'cd $REPO_K8S && \
-                    cd qa-$PROJECT && \
-                    kubectl apply -f .'
-            }
-        }
-        stage('Deploy approval'){
-            steps {
-                input "Deploy to Prod?"
-            }
-        }
-        stage('Deploy to Prod') {
-            steps {
-                sh 'cd $REPO_K8S && \
-                    cd prod-$PROJECT && \
-                    kubectl apply -f .'
-            }
-        }
-    
     }
     post {
         always {
