@@ -54,20 +54,6 @@ pipeline {
                 sh 'docker push lucasvscosta/dev-projeto-final'
             }
         }
-        stage('Deploy to Dev'){
-            steps {
-                sh 'cd $REPO_K8S && \
-                    cd dev-$PROJECT && \
-                    kubectl apply -f .'
-            }
-        }
-        stage('Deploy to QA') {
-            steps {
-                sh 'cd $REPO_K8S && \
-                    cd qa-$PROJECT && \
-                    kubectl apply -f .'
-            }
-        }
         stage('Deploy approval'){
             steps {
                 input "Deploy to Prod?"
@@ -80,7 +66,6 @@ pipeline {
                     kubectl apply -f .'
             }
         }
-    
     }
     post {
         always {

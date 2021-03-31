@@ -33,17 +33,17 @@ pipeline {
                     ./mvnw package -Dmaven.test.skip -DskipTests -Dmaven.javadoc.skip=true'
             }
         }
-        stage('TDD') { 
+             stage('TDD') { 
             steps {
-                sh 'cd $PROJECT_TEST && \
+                sh 'cd $PROJECT && \
                     ./test.sh'
             }
         }
         stage('BDD') { 
             steps {
                 sh 'cd $PROJECT && \
-                        nohup ./start.sh & '
-                sh 'cd $PROJECT_TEST && \
+                        nohup ./start.sh & \
+                        cd $PROJECT_TEST && \
                         ./test.sh'
             }
         }

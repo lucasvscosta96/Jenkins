@@ -5,7 +5,7 @@ pipeline {
     environment { 
         PROJECT         = 'projeto-final'
         PROJECT_TEST    = 'TDD-BDD'
-        REPO_K8S        = 'Templates-K8S'
+        REPO_HEROKU     = 'qa-projeto-final-d'
     }
     
     stages {
@@ -17,13 +17,10 @@ pipeline {
         stage('Git Clone') {
             steps {
                 dir ("${PROJECT}"){
-                    git branch: 'main', credentialsId: 'Github', url: "git@github.com:lucasvscosta96/${PROJECT}.git"
+                    git branch: 'qa', credentialsId: 'Github', url: "git@github.com:lucasvscosta96/${PROJECT}.git"
                 }
                 dir ("${PROJECT_TEST}"){
                     git branch: 'main', credentialsId: 'Github', url: "git@github.com:lucasvscosta96/${PROJECT_TEST}.git"
-                }
-                dir ("${REPO_K8S}"){
-                    git branch: 'main', credentialsId: 'Github', url: "git@github.com:lucasvscosta96/${REPO_K8S}.git"
                 }
             }
         }
@@ -33,7 +30,7 @@ pipeline {
                     ./mvnw package -Dmaven.test.skip -DskipTests -Dmaven.javadoc.skip=true'
             }
         }
-        stage('TDD') { 
+             stage('TDD') { 
             steps {
                 sh 'cd $PROJECT && \
                     ./test.sh'
@@ -47,40 +44,13 @@ pipeline {
                         ./test.sh'
             }
         }
-        stage('Docker Push') {
+        stage('Deploy to Heroku') {
             steps {
                 sh 'cd $PROJECT && \
-                    docker build -t lucasvscosta/dev-projeto-final -f Dockerfile .'
-                sh 'docker push lucasvscosta/dev-projeto-final'
+                    heroku git:remote -a $REPO_HEROKU && \
+                    git push heroku $GIT_BRANCH:master'
             }
         }
-        stage('Deploy to Dev'){
-            steps {
-                sh 'cd $REPO_K8S && \
-                    cd dev-$PROJECT && \
-                    kubectl apply -f .'
-            }
-        }
-        stage('Deploy to QA') {
-            steps {
-                sh 'cd $REPO_K8S && \
-                    cd qa-$PROJECT && \
-                    kubectl apply -f .'
-            }
-        }
-        stage('Deploy approval'){
-            steps {
-                input "Deploy to Prod?"
-            }
-        }
-        stage('Deploy to Prod') {
-            steps {
-                sh 'cd $REPO_K8S && \
-                    cd prod-$PROJECT && \
-                    kubectl apply -f .'
-            }
-        }
-    
     }
     post {
         always {
