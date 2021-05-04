@@ -27,28 +27,15 @@ pipeline {
         stage('Build') { 
             steps {
                 sh 'cd $PROJECT && \
+                    ./mvnw clean && \
                     ./mvnw package -Dmaven.test.skip -DskipTests -Dmaven.javadoc.skip=true'
-            }
-        }
-             stage('TDD') { 
-            steps {
-                sh 'cd $PROJECT && \
-                    ./test.sh'
-            }
-        }
-        stage('BDD') { 
-            steps {
-                sh 'cd $PROJECT && \
-                        nohup ./start.sh & \
-                        cd $PROJECT_TEST && \
-                        ./test.sh'
             }
         }
         stage('Deploy to Heroku') {
             steps {
                 sh 'cd $PROJECT && \
                     heroku git:remote -a $REPO_HEROKU && \
-                    git push heroku $GIT_BRANCH:master'
+                    git push heroku qa:master'
             }
         }
     }

@@ -17,7 +17,7 @@ pipeline {
         stage('Git Clone') {
             steps {
                 dir ("${PROJECT}"){
-                    git branch: 'prod', credentialsId: 'Github', url: "git@github.com:lucasvscosta96/${PROJECT}.git"
+                    git branch: 'main', credentialsId: 'Github', url: "git@github.com:lucasvscosta96/${PROJECT}.git"
                 }
                 dir ("${PROJECT_TEST}"){
                     git branch: 'main', credentialsId: 'Github', url: "git@github.com:lucasvscosta96/${PROJECT_TEST}.git"
@@ -27,28 +27,15 @@ pipeline {
         stage('Build') { 
             steps {
                 sh 'cd $PROJECT && \
+                    ./mvnw clean && \
                     ./mvnw package -Dmaven.test.skip -DskipTests -Dmaven.javadoc.skip=true'
-            }
-        }
-             stage('TDD') { 
-            steps {
-                sh 'cd $PROJECT && \
-                    ./test.sh'
-            }
-        }
-        stage('BDD') { 
-            steps {
-                sh 'cd $PROJECT && \
-                        nohup ./start.sh & \
-                        cd $PROJECT_TEST && \
-                        ./test.sh'
             }
         }
         stage('Deploy to Heroku') {
             steps {
                 sh 'cd $PROJECT && \
                     heroku git:remote -a $REPO_HEROKU && \
-                    git push heroku $GIT_BRANCH:master'
+                    git push heroku main:master'
             }
         }
     }

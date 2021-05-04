@@ -6,6 +6,7 @@ pipeline {
         PROJECT         = 'projeto-final'
         PROJECT_TEST    = 'TDD-BDD'
         REPO_K8S        = 'Templates-K8S'
+        CONTEXT_K8S     = 'docker-desktop'
     }
     
     stages {
@@ -30,39 +31,24 @@ pipeline {
         stage('Build') { 
             steps {
                 sh 'cd $PROJECT && \
+                    ./mvnw clean && \
                     ./mvnw package -Dmaven.test.skip -DskipTests -Dmaven.javadoc.skip=true'
             }
         }
-        stage('TDD') { 
-            steps {
-                sh 'cd $PROJECT && \
-                    ./test.sh'
-            }
-        }
-        stage('BDD') { 
-            steps {
-                sh 'cd $PROJECT && \
-                        nohup ./start.sh & \
-                        cd $PROJECT_TEST && \
-                        ./test.sh'
-            }
-        }
+  
         stage('Docker Push') {
             steps {
                 sh 'cd $PROJECT && \
-                    docker build -t lucasvscosta/dev-projeto-final -f Dockerfile .'
-                sh 'docker push lucasvscosta/dev-projeto-final'
-            }
-        }
-        stage('Deploy approval'){
-            steps {
-                input "Deploy to Prod?"
+                    docker build -t lucasvscosta/prod-projeto-final -f Dockerfile .'
+                sh 'docker push lucasvscosta/prod-projeto-final'
             }
         }
         stage('Deploy to Prod') {
             steps {
                 sh 'cd $REPO_K8S && \
                     cd prod-$PROJECT && \
+                    kubectl config use-context $CONTEXT_K8S $$ \
+                    kubectl delete deploy prod-$PROJECT && \
                     kubectl apply -f .'
             }
         }

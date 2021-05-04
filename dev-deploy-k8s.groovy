@@ -6,6 +6,7 @@ pipeline {
         PROJECT         = 'projeto-final'
         PROJECT_TEST    = 'TDD-BDD'
         REPO_K8S        = 'Templates-K8S'
+        CONTEXT_K8S    = 'docker-desktop'
     }
     
     stages {
@@ -30,10 +31,11 @@ pipeline {
         stage('Build') { 
             steps {
                 sh 'cd $PROJECT && \
+                    ./mvnw clean && \
                     ./mvnw package -Dmaven.test.skip -DskipTests -Dmaven.javadoc.skip=true'
             }
         }
-             stage('TDD') { 
+        stage('TDD') { 
             steps {
                 sh 'cd $PROJECT && \
                     ./test.sh'
@@ -58,6 +60,8 @@ pipeline {
             steps {
                 sh 'cd $REPO_K8S && \
                     cd dev-$PROJECT && \
+                    kubectl config use-context $CONTEXT_K8S && \
+                    kubectl delete deploy dev-$PROJECT && \
                     kubectl apply -f .'
             }
         }

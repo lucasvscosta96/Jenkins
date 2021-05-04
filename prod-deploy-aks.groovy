@@ -5,7 +5,8 @@ pipeline {
     environment { 
         PROJECT         = 'projeto-final'
         PROJECT_TEST    = 'TDD-BDD'
-        REPO_HEROKU     = 'dev-projeto-final-d'
+        REPO_K8S        = 'Templates-K8S'
+        CONTEXT_K8S     = 'projeto-final-concrete'
     }
     
     stages {
@@ -17,10 +18,13 @@ pipeline {
         stage('Git Clone') {
             steps {
                 dir ("${PROJECT}"){
-                    git branch: 'dev', credentialsId: 'Github', url: "git@github.com:lucasvscosta96/${PROJECT}.git"
+                    git branch: 'main', credentialsId: 'Github', url: "git@github.com:lucasvscosta96/${PROJECT}.git"
                 }
                 dir ("${PROJECT_TEST}"){
                     git branch: 'main', credentialsId: 'Github', url: "git@github.com:lucasvscosta96/${PROJECT_TEST}.git"
+                }
+                dir ("${REPO_K8S}"){
+                    git branch: 'main', credentialsId: 'Github', url: "git@github.com:lucasvscosta96/${REPO_K8S}.git"
                 }
             }
         }
@@ -31,25 +35,20 @@ pipeline {
                     ./mvnw package -Dmaven.test.skip -DskipTests -Dmaven.javadoc.skip=true'
             }
         }
-        stage('TDD') { 
+        stage('Docker Push') {
             steps {
                 sh 'cd $PROJECT && \
-                    ./test.sh'
+                    docker build -t lucasvscosta/prod-projeto-final -f Dockerfile .'
+                sh 'docker push lucasvscosta/prod-projeto-final'
             }
         }
-        stage('BDD') { 
+        stage('Deploy to Prod'){
             steps {
-                sh 'cd $PROJECT && \
-                        nohup ./start.sh & \
-                        cd $PROJECT_TEST && \
-                        ./test.sh'
-            }
-        }
-        stage('Deploy to Heroku') {
-            steps {
-                sh 'cd $PROJECT && \
-                    heroku git:remote -a $REPO_HEROKU && \
-                    git push heroku dev:master'
+                sh 'cd $REPO_K8S && \
+                    cd aks/prod && \
+                    kubectl config use-context $CONTEXT_K8S && \
+                    kubectl delete deploy prod-$PROJECT && \
+                    kubectl apply -f .'
             }
         }
     }

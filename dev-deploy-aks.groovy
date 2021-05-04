@@ -5,7 +5,8 @@ pipeline {
     environment { 
         PROJECT         = 'projeto-final'
         PROJECT_TEST    = 'TDD-BDD'
-        REPO_HEROKU     = 'dev-projeto-final-d'
+        REPO_K8S        = 'Templates-K8S'
+        CONTEXT_K8S     = 'projeto-final-concrete'
     }
     
     stages {
@@ -21,6 +22,9 @@ pipeline {
                 }
                 dir ("${PROJECT_TEST}"){
                     git branch: 'main', credentialsId: 'Github', url: "git@github.com:lucasvscosta96/${PROJECT_TEST}.git"
+                }
+                dir ("${REPO_K8S}"){
+                    git branch: 'main', credentialsId: 'Github', url: "git@github.com:lucasvscosta96/${REPO_K8S}.git"
                 }
             }
         }
@@ -45,11 +49,20 @@ pipeline {
                         ./test.sh'
             }
         }
-        stage('Deploy to Heroku') {
+        stage('Docker Push') {
             steps {
                 sh 'cd $PROJECT && \
-                    heroku git:remote -a $REPO_HEROKU && \
-                    git push heroku dev:master'
+                    docker build -t lucasvscosta/dev-projeto-final -f Dockerfile .'
+                sh 'docker push lucasvscosta/dev-projeto-final'
+            }
+        }
+        stage('Deploy to Dev'){
+            steps {
+                sh 'cd $REPO_K8S && \
+                    cd aks/dev && \
+                    kubectl config use-context $CONTEXT_K8S && \
+                    kubectl delete deploy dev-$PROJECT && \
+                    kubectl apply -f .'
             }
         }
     }
